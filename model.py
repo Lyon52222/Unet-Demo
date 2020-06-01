@@ -11,10 +11,16 @@ from keras import backend as keras
 
 
 def unet(pretrained_weights = None,input_size = (256,256,1)):
-    inputs = Input(input_size)
+    inputs = Input(input_size)      #初始化输入张量大小
     conv1 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(inputs)
+    #filter数量，输出的维度 64个卷积核
+    #卷积核的大小 3×3
+    #激活函数 Relu
+    #paddding.. 这里采用了same 和论文中不同，same不改变图片尺寸，采用边缘填充
+    #kernel_initalizer 权值初始化方式
     conv1 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv1)
     pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
+    #2×2最大池化
     conv2 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool1)
     conv2 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv2)
     pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
@@ -24,6 +30,7 @@ def unet(pretrained_weights = None,input_size = (256,256,1)):
     conv4 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool3)
     conv4 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv4)
     drop4 = Dropout(0.5)(conv4)
+    #Dropout. 概率为0，5 减少过拟合。
     pool4 = MaxPooling2D(pool_size=(2, 2))(drop4)
 
     conv5 = Conv2D(1024, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool4)
@@ -31,7 +38,9 @@ def unet(pretrained_weights = None,input_size = (256,256,1)):
     drop5 = Dropout(0.5)(conv5)
 
     up6 = Conv2D(512, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(drop5))
+    #先进行上采样放大，在进行卷积相当于反卷积操作。
     merge6 = concatenate([drop4,up6], axis = 3)
+    #skip construction 特征图拼接 axis=3 对通道进行拼接。 （width,heigth,channels)
     conv6 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge6)
     conv6 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv6)
 
@@ -55,7 +64,9 @@ def unet(pretrained_weights = None,input_size = (256,256,1)):
     model = Model(input = inputs, output = conv10)
 
     model.compile(optimizer = Adam(lr = 1e-4), loss = 'binary_crossentropy', metrics = ['accuracy'])
-    
+    #优化器 Adam learningrate 1e-4
+    #损失函数 binary_crossentropy 与sigmoid相对应
+    #metrics 评价的参数。 accuracy 预测的精度。
     #model.summary()
 
     if(pretrained_weights):
