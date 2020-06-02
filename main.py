@@ -11,6 +11,8 @@ data_gen_args = dict(rotation_range=0.2,    #旋转
                     zoom_range=0.05,        #缩放
                     horizontal_flip=True,   #水平反转
                     fill_mode='nearest')    #填充模式
+
+
 myGene = trainGenerator(2,'data/membrane/train','image','label',data_gen_args,save_to_dir = None)
 
 model = unet()
